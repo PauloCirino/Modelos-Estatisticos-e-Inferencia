@@ -1,0 +1,171 @@
+%Classe do Documento
+\documentclass{article}
+
+%Pacote Utilizados
+\usepackage{indentfirst} %Arrumar Identacao no inicio de paragrafos
+\usepackage[utf8]{inputenc}
+
+
+%Título
+\title{ELE093 - Modelos Estatísticos e Inferência \\ Estudo de Caso III}
+
+%Autores
+\author{ ~\\ Davi Pinheiro Viana \\ Douglas William Araujo da Silva \\ Letícia Diniz da Cruz \\ Paulo Cirino Ribeiro Neto \\ Priscila Pires de Carvalho Rocha}
+
+\begin{document}
+
+\maketitle 
+<<setup, echo=FALSE, cache=TRUE>>=
+#Leitura dos pacotes
+require("car", quietly = TRUE, warn.conflicts = FALSE)
+
+#Leitura dos Dados
+Data <- read.csv("./EngSis_weight_estXmeasure.csv",
+                  sep = ",",
+                  header = TRUE);
+Data <- cbind(Data,
+              Dif = Data$Measured.weight.kg - Data$Estimated.weight.kg )
+@
+
+\section{Introdução}
+
+Quanto as pessoas sub-estimam o próprio peso ao serem perguntadas sobre isso?
+
+Geralmente ao serem questionadas sobre seu peso e altura, a tendência é que tanto homens quanto mulheres mintam essas informações. Uma pesquisa publicada na Ethnicity & Disease em 2002 constatou que não importa o sexo ou grupo étnico, homens e mulheres dizem ser mais altos do que são e, principalmente as mulheres, dizem ser mais magras do que na realidade são.
+
+A proposta deste Estudo de Caso é investigar a ocorrência do efeito de sub-estimação do próprio peso por parte dos alunos do curso de Engenharia de Sistemas e quantificar a magnitude deste efeito, caso presente.
+
+Foi realizada uma coleta de dados entre onze alunos da disciplina “Modelos Estatísticos e Inferência”, recolhendo o peso de cada um, nenhum dos alunos sabia que teria seu peso aferido. Logos após a coleta de dados, o peso de cada aluno foi aferido utilizando uma balança doméstica fornecida pelo professor e os valores foram registrados em uma planilha.
+
+Antes da análise dos dados, o grupo propôs uma hipótese e definiu alguns parâmetros, para então fazer um Experimento Estatístico e avaliar os valores encontrados. 
+
+Com a realização do trabalho, espera-se poder afirmar que a turma tenha declarado um peso menor do que o que foi aferido na balança. Através desse trabalho, será possível revisar e fixar os conceitos de estatística vistos em sala e praticar a programação utilizando linguagem R.
+
+\section{Análise Exploratória dos Dados}
+Ao início das atividades, o grupo decidiu que deveríamos fazer uma análise exploratória preliminar dos dados para que pudêssemos saber como eles se comportam e por consequência quais tipo de premissas podemos levantar sobre os mesmo.
+
+Decidimos então que um \textit{Box Plot} seria uma ótima forma para analisar a distribuição dos dados separadamente. 
+<<boxPlot, echo = FALSE, cache = TRUE, out.height = '6cm', out.width = '6cm', fig.align='center'>>=
+
+##Box Plot
+boxplot(Data$Measured.weight.kg, Data$Estimated.weight.kg,
+        ylab = "Massa",
+        names = c("Medida","Esperada"))
+
+@
+
+Pelo \textit{Box Plot} foi possível perceber que ambas as amostras, da massa medida e da massa esperada, se centravam sobre um valor muito próximo, 67Kg, de forma quase que simétrica.
+Percebemos também que seus máximos e mínimos eram proporcionais, a única diferença sendo que a calda dos valores esperados era maior.
+
+O problema das conclusões do \textit{Box Plot}, é que elas são limitadas, esse tipo de gráfico não relaciona as amostras de um individuo nas 2 populações.
+
+Decidimos então que precisávamos de gráficos que relacionavam essas 2 medidas e que nos fornecessem informações sobre uma possível normalidade dessa medida.
+
+Decidimos então que a media que relacionaria as amostras seria $\mu = Massa Medida - Massa Esperada$, e que faríamos gráficos de distribuição de densidade e o teste de normalidade de \textbf{Shapiro Wilk}.
+
+
+<<normPlot, echo = FALSE, cache = TRUE, out.height = '6cm', out.width = '6cm',fig.show='hold'>>=
+
+##Distribuicao de Densidade
+plot(density(Data$Dif),
+     main = "Densidade de Diferença das Massas",
+     ylab="Densidade",
+     xlab = "Diferença entre Massa Medida e Esperada")
+polygon(density(Data$Dif ), col="darkcyan", border = "red")
+
+qqPlot(Data$Dif,
+       pch=16,
+       cex=1.5,
+       las=1,
+       main = "Teste de normalidade de Shapiro Wilk",
+       xlab = "Quantiles",
+       ylab = "Massa Medida - Esperada")
+@
+
+O que foi possível inferir correlacionando os gráficos é que podemos sim dizer que a medida de diferença $\mu$ é normal, uma vez que o aspecto `` não normal'' da calda do gráfico de distribuição de densidade é causada por 3 \textit{ouliers}, onde seu efeito seria mitigado caso houvessem mais amostras.
+
+\section{Experimento Estatístico}
+
+\subsection{Hipótese}
+O teste realizado possui as seguintes hipóteses :
+\begin{displaymath}H_0 : \mu_{D} \leq 0 \end{displaymath}
+\begin{displaymath}H_1 : \mu_{D} > 0 \end{displaymath}
+
+
+Onde D é a média das diferenças entre o valor de peso medido e o peso estimado.
+
+\subsection{Parâmetros}
+O grupo decidiu que deseja-se obter um nível de confiança do teste de 95\% ($\alpha = 0,05$) e espera-se que o teste tenha uma potência de 80\% ($\beta = 0,2$).
+Para estimar o tamanho do efeito a ser observado ($\delta^{*}$) foram levado os seguintes aspectos em consideração:
+\begin{itemize}
+	\item Erro de medida da balança igual a 100 gramas
+	\item Erro na estimativa do sujeito igual a 500 gramas
+\end{itemize}
+
+Assim, obtemos um valor de $\delta^{*}$= 0,6 .
+
+\subsection{Teste}
+\ O teste escolhido para o experimento estatístico foi o teste T unidirecional.  Esse tipo de teste foi utilizado pois é um teste de hipótese que usa conceitos estatísticos para rejeitar ou não uma hipótese nula sem a necessidade de conhecer a variância dos dados, como é o caso dos dados coletados.
+
+
+Além disso, foi escolhido teste (e hipótese alternativa) unidirecional pois, deseja-se saber se, para essa coleta de dados, a afirmação de que \textbf{``Pessoas tendem a sistematicamente declarar um peso corporal inferior ao valor real''} é verdadeira.
+
+
+\subsection{Resultados}
+A partir da execução do teste T na linguagem R, os seguintes resultados foram obtidos:
+<<tTest01,echo=FALSE>>=
+t.test(Data$Dif,
+       alternative = "greater")
+@
+
+Vale destacar que foi encontrado um valor de $t_0$ dentro do intervalo de confiança, um número de graus de liberdade igual ao número de sujeitos (tamanho amostral) menos um, conforme esperado, um Valor \textbf{P} maior do que o meu nível de confiança , além dos valores do intervalo de confiança $\alpha$, e da média das diferenças entre os valores de peso medido e estimado.
+
+
+\subsection{Potência do Teste}
+
+Considerando-se os parâmetros estipulados pelo grupo, com exceção do valor de potência, realizou-se o teste de potência utilizando a função power.t.test, que obteve os seguintes resultados:
+<<powerTTest01,echo=FALSE>>=
+power.t.test(n = dim(Data)[1],
+             delta = 0.6,
+             sd = sd(Data$Dif),
+             sig.level = 0.05,
+             alternative = "one.sided",
+             type = "one.sample")
+@
+
+Percebemos então que o valor 0.1956385 é muito inferior ao valor esperado inicialmente, igual a 0.8. 
+
+Assim, foram realizados outros dois testes de potência para averiguar como seria possível obter a potência almejada, que seguem:
+
+<<powerTTest02,echo=FALSE>>=
+power.t.test(n = dim(Data)[1],
+             sd = sd(Data$Dif),
+             sig.level = 0.05,
+             alternative = "one.sided",
+             type = "one.sample",
+             power = 0.80)
+
+power.t.test(delta = 0.6,
+             sd = sd(Data$Dif),
+             sig.level = 0.05,
+             alternative = "one.sided",
+             type = "one.sample",
+             power = 0.80)
+@
+
+O primeiro teste nesta fase, foi para descobrir quantas amostras seriam necessárias para conseguir a potência de 0.8, mantendo-se o tamanho do efeito igual a 0.6 . Neste caso, o teste indicou que seriam necessárias 97 amostras (uma quantidade muito maior do que a utilizada neste estudo de caso).
+
+Para o segundo teste, foram especificados a potência e o tamanho amostral, obtendo-se assim o tamanho do efeito necessário para obter o resultado desejado. Encontrou-se um tamanho de efeito igual a 1.9 . Dessa forma, o grupo percebeu que para obter a potência de 0.8, a melhor alternativa teria sido definir o parâmetro $\delta^{*}$ inicialmente como 1.9.
+
+\section{Conclusões}
+
+Diante dos resultados encontrados, podemos afirmar que, dentro de um nível de confiança de 95\% falhamos em refutar a nossa hipótese nula de que ``as pessoas tendem a sistematicamente declarar um peso corporal maior ou igual ao valor real''. Nossa conclusão se baseia no fato de termos encontrado um valor de $t_0$ dentro do intervalo de confiança e um Valor P  muito maior que o nível de significância usado no desenvolvimento desta inferência.
+
+Uma observação importante é o valor da potência do teste, que no nosso caso teve como resultado 0.196, um valor considerado baixo em relação ao desejável, pois pela definição de potência, temos uma probabilidade de 0.196 de não cometer um erro do tipo 2, ou seja, temos uma probabilidade de 0,804 de  não conseguir rejeitar a hipótese nula, no caso desta hipótese ser falsa.
+
+\section{Possíveis Melhoras}
+A amostra usada nesse experimento foi colhida de pessoas que estavam trabalhando com assuntos relacionados a peso durante esse mesmo semestre e inclusive já haviam discutido sobre o tema, fato esse que pode ter levado essas pessoas a darem uma resposta tendenciosa na direção contrária à do experimento, ou seja, tenham estimado o próprio peso um pouco para mais afim de evitar essa tendência sistemática que o experimento investiga. Uma sugestão para melhorar o experimento seria colher os dados de pessoas que não estejam trabalhando com o tema ou no caso desse experimento ser feito em turmas posteriores, a coleta dos dados pode ser feita no primeiro dia de aula, antes mesmo do tema ser apresentado aos alunos.
+
+Uma outra sugestão para melhorar o experimento é aumentar o tamanho da amostra, e assim elevar o valor da potência do teste. De acordo com os cálculos de potência realizados para esse experimento para uma potência de 0.8 um bom número de amostra seria algo em torno de 97 amostras, que poderiam ser colhidas entre outros alunos de Engenharia de Sistemas, de maneira aleatória, dentro da própria escola de engenharia. 
+
+\end{document}
